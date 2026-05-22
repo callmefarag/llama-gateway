@@ -12,8 +12,9 @@
 
 const args = process.argv.slice(2);
 
+import pkg from "../package.json";
+
 if (args.includes("--version") || args.includes("-v")) {
-  const pkg = await Bun.file(new URL("../package.json", import.meta.url)).json();
   console.log(`llama-gateway v${pkg.version}`);
   process.exit(0);
 }

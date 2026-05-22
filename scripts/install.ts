@@ -84,7 +84,7 @@ Then run: llama-gateway
 const installDir = getInstallDir();
 const binaryName = IS_WINDOWS ? "llama-gateway.exe" : "llama-gateway";
 const outPath = join(installDir, binaryName);
-const entryPoint = join(pkgRoot, "index.ts");
+const entryPoint = join(pkgRoot, "bin", "llama-gateway.ts");
 
 console.log("\n" + "═".repeat(60));
 console.log("  llama-gateway — Self Installer");

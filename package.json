@@ -18,7 +18,7 @@
   "scripts": {
     "start":        "bun run index.ts",
     "dev":          "bun --watch run index.ts",
-    "build":        "bun build --compile --minify --outfile dist/llama-gateway index.ts",
+    "build":        "bun build --compile --minify --outfile dist/llama-gateway bin/llama-gateway.ts",
     "install-path": "bun run scripts/install.ts",
     "test-gen":     "bun run test-gen.ts",
     "typecheck":    "tsc --noEmit"
