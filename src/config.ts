@@ -9,7 +9,7 @@ import { homedir, platform } from "os";
 import { dirname, isAbsolute, resolve } from "path";
 import type { GatewayConfig } from "./types";
 
-const CONFIG_FILE =
+export const CONFIG_FILE =
   process.env.GATEWAY_CONFIG ?? "./gateway.config.yaml";
 
 // ── Path helpers ──────────────────────────────────────────────────────────────

@@ -1,7 +1,8 @@
 // ============================================================================
 // LLAMA-GATEWAY — Main Orchestrator
 // ============================================================================
-import { loadConfig, resolveExecutable, parseListenPort } from "./src/config";
+import { loadConfig, parseListenPort } from "./src/config";
+import { resolveOrSetupExecutable } from "./src/resolver";
 import { generateLlamaSwapConfig } from "./src/generator/llama-swap";
 import { generateOpenCodeConfig } from "./src/generator/opencode";
 import { sanitizeMessages } from "./src/middleware/sanitizer";
@@ -25,8 +26,16 @@ console.log(`[CONFIG] Models       : ${modelList || "⚠ none defined"}`);
 console.log(`[CONFIG] Default model: ${cfg.routing.default_model}\n`);
 
 // ── Resolve executables (PATH-first, then config path) ────────────────────────
-const swapExe = await resolveExecutable(cfg.llama_swap.executable);
-const serverExe = await resolveExecutable(cfg.llama_server.executable);
+const swapExe = await resolveOrSetupExecutable({
+  name: "llama-swap",
+  configuredValue: cfg.llama_swap.executable,
+  configSection: "llama_swap",
+});
+const serverExe = await resolveOrSetupExecutable({
+  name: "llama-server",
+  configuredValue: cfg.llama_server.executable,
+  configSection: "llama_server",
+});
 console.log(`[EXEC] llama-swap   : ${swapExe}`);
 console.log(`[EXEC] llama-server : ${serverExe}\n`);
 
