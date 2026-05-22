@@ -1,0 +1,194 @@
+# =============================================================================
+# gateway.config.example.yaml  —  Reference configuration with all options
+# =============================================================================
+# Copy this file to gateway.config.yaml and fill in your own paths.
+# All flags listed here map directly to llama-server CLI arguments.
+# =============================================================================
+
+# ── Gateway HTTP server ───────────────────────────────────────────────────────
+gateway:
+  port: 8082          # The port your IDE client (OpenCode, Roo, Cline) connects to
+  log_level: info     # debug | info | warn | error
+
+# ── Memory / RAG injection (optional) ────────────────────────────────────────
+# Reads a local JSONL file and injects relevant architectural decisions
+# into the system prompt so all models share a unified project memory.
+memory:
+  path: ~/.llama-gateway/memory.jsonl   # ~ is expanded to your home directory
+  always_inject_count: 3                # always inject top N regardless of keyword match
+
+# ── llama-swap process ────────────────────────────────────────────────────────
+llama_swap:
+  listen: "127.0.0.1:8081"   # address llama-swap listens on
+
+  # Name on PATH, or absolute path to the llama-swap binary.
+  # Bun.which() is tried first (cross-platform: PowerShell, bash, zsh).
+  # Windows: llama-swap is rarely on PATH, so use the full path:
+  executable: llama-swap      # or: C:/Tools/llama-swap/llama-swap.exe
+
+  watch_config: true          # enable hot-reload when the generated config changes
+  generated_config_path: ./generated/llama-swap.yaml
+  health_check_timeout: 120   # seconds to wait for llama-swap to become ready
+  global_ttl: 0               # 0 = models never auto-unload (override per-model with `ttl`)
+  log_level: info
+  send_loading_state: true    # sends a status while the model is loading
+
+# ── llama.cpp server binary ───────────────────────────────────────────────────
+llama_server:
+  # Name on PATH, or absolute path to llama-server.
+  # Windows example: C:/Tools/llama-cpp/llama-server.exe
+  # Linux/macOS example: /usr/local/bin/llama-server (or just "llama-server" if on PATH)
+  executable: llama-server
+
+# ── Model definitions ─────────────────────────────────────────────────────────
+# Add as many models as your hardware supports. Each model becomes an entry
+# in the generated llama-swap.yaml and the generated opencode.jsonc.
+#
+# `flags`       — curated llama-server flags. All keys are typed and validated.
+# `extra_flags` — raw string appended verbatim to the cmd. Use for any flag
+#                 not listed in `flags` (full llama.cpp compatibility).
+# `ttl`         — seconds until llama-swap unloads an idle model. 0 = never.
+# `aliases`     — additional model names that route to this model in llama-swap.
+models:
+
+  # ── Example: Vision model (multimodal, fast) ────────────────────────────
+  - id: my-vision-model
+    label: "Gemma 4B (Vision)"
+    model_path: /path/to/gemma-4b.gguf
+    ttl: 180
+    aliases:
+      - "vision"
+      - "fast"
+    flags:
+      # ── Vision ──────────────────────────────────────────────────────────
+      mmproj: /path/to/mmproj.gguf   # multimodal projector
+      image_min_tokens: 560
+      image_max_tokens: 2240
+
+      # ── GPU ─────────────────────────────────────────────────────────────
+      ngl: 99           # GPU layers. 99 = offload everything. Reduce if VRAM runs out.
+
+      # ── Context ─────────────────────────────────────────────────────────
+      ctx_size: 8192    # context window tokens. Larger = more VRAM.
+      batch_size: 256   # prompt evaluation batch size
+      ubatch_size: 512  # micro-batch size (-ub)
+      parallel: 2       # simultaneous request slots
+
+      # ── Threads ─────────────────────────────────────────────────────────
+      threads: 8        # CPU threads (-t)
+      threads_batch: 16 # batch eval threads
+
+      # ── Sampling defaults ────────────────────────────────────────────────
+      temp: 1.0
+      top_p: 0.95
+      top_k: 64
+
+      # ── Attention & Memory ───────────────────────────────────────────────
+      flash_attn: true  # FlashAttention. Almost always beneficial.
+      no_mmap: false    # true = pin model file in RAM (prevents OS swapping)
+      mlock: false      # true = prevent model being swapped out
+
+      # ── KV Cache ────────────────────────────────────────────────────────
+      cache_type_k: q8_0   # K-cache quant: f16 | q8_0 | q4_0 | q4_1 | iq4_nl
+      cache_type_v: q8_0   # V-cache quant: same options
+      cache_prompt: true   # enable prompt caching
+      cache_idle_slots: true
+      kv_unified: true
+      slot_save_path: /path/to/cache/my-vision-model/
+      ctx_checkpoints: 1   # context checkpointing for long contexts
+
+      # ── Context behavior ─────────────────────────────────────────────────
+      context_shift: true  # enable context shifting for infinite context
+
+      # ── Priority ────────────────────────────────────────────────────────
+      prio: 3              # process scheduling priority
+
+      # ── Templates ───────────────────────────────────────────────────────
+      jinja: false
+      # chat_template_file: /path/to/template.jinja
+      # chat_template_kwargs: '{"enable_thinking":true}'  # raw JSON string
+
+      # ── Misc ────────────────────────────────────────────────────────────
+      # reasoning: "off"   # "on" | "off"
+      # no_warmup: false   # skip model warmup on load
+      # seed: -1           # -1 = random
+
+    # Any llama-server flag not in `flags` goes here — appended verbatim.
+    # Examples:
+    #   extra_flags: '--override-tensor "blk\..*\.ffn.*=CPU"'
+    #   extra_flags: '-ot ".ffn_(up|down)_exps.=CPU" --mlock'
+    extra_flags: ""
+
+  # ── Example: Large MoE coding model ─────────────────────────────────────
+  - id: my-coder-model
+    label: "Qwen 35B MoE (Coder)"
+    model_path: /path/to/qwen35b.gguf
+    ttl: 300
+    aliases:
+      - "coder"
+      - "default"
+    flags:
+      ngl: 78
+      ctx_size: 32768
+      batch_size: 2048
+      ubatch_size: 2048
+      temp: 0.6
+      top_p: 0.95
+      min_p: 0.05
+      flash_attn: true
+      no_mmap: true
+      cache_type_k: q8_0
+      cache_type_v: q8_0
+      seed: -1
+      parallel: 1
+      prio: 3
+      kv_unified: true
+      slot_save_path: /path/to/cache/my-coder-model/
+      cache_prompt: true
+      jinja: true
+    # MoE expert offload to CPU — typical for Qwen/DeepSeek MoE on VRAM-limited setups
+    extra_flags: '-ot ".ffn_(up|down)_exps.=CPU"'
+
+# ── Routing rules ─────────────────────────────────────────────────────────────
+# Rules are evaluated TOP-TO-BOTTOM. First match wins.
+#
+# condition options:
+#   has_images      — payload contains an image attachment
+#   system_contains — system prompt contains any of the keywords
+#   user_contains   — user messages contain any of the keywords
+#   prompt_contains — either system or user messages contain any keyword
+routing:
+  default_model: my-coder-model   # fallback when no rule matches
+
+  rules:
+    - name: "Vision"
+      condition: has_images
+      model: my-vision-model
+
+    - name: "Planner"
+      condition: system_contains
+      keywords: ["archivist", "plan"]
+      model: my-coder-model
+
+    - name: "Builder"
+      condition: system_contains
+      keywords: ["build", "deploy"]
+      model: my-coder-model
+
+# ── Context runway shield ─────────────────────────────────────────────────────
+# When the combined payload exceeds `max_chars`, the gateway evicts the oldest
+# user+assistant message pairs until the payload fits within `target_trim_chars`.
+# This prevents the "Compaction Prompt-Eval Death Loop" on VRAM-constrained setups.
+context:
+  max_chars: 95000         # payload size (chars) that triggers deflation
+  target_trim_chars: 65000 # target size after deflation
+
+# ── OpenCode integration ──────────────────────────────────────────────────────
+# The gateway generates an opencode.jsonc with the correct provider + model config.
+# Copy generated/opencode.jsonc to your project root, or merge the provider block
+# into ~/.config/opencode/opencode.jsonc for global access.
+opencode:
+  generated_config_path: ./generated/opencode.jsonc
+  provider_id: llama-gateway           # internal ID used in model references
+  provider_name: "Llama Gateway (Local)"
+  small_model: my-vision-model         # used for lightweight tasks (title gen, summaries)

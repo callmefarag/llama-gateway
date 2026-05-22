@@ -1,0 +1,35 @@
+{
+  "name": "llama-gateway",
+  "version": "0.1.0",
+  "description": "Intelligent middleware proxy that bridges AI IDE clients to local llama.cpp inference engines",
+  "keywords": ["llama", "llama.cpp", "llama-swap", "opencode", "ai", "local-ai", "proxy", "bun"],
+  "homepage": "https://github.com/callmefarag/llama-gateway#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callmefarag/llama-gateway.git"
+  },
+  "license": "MIT",
+  "private": false,
+
+  "bin": {
+    "llama-gateway": "./bin/llama-gateway.ts"
+  },
+
+  "scripts": {
+    "start":        "bun run index.ts",
+    "dev":          "bun --watch run index.ts",
+    "build":        "bun build --compile --minify --outfile dist/llama-gateway index.ts",
+    "install-path": "bun run scripts/install.ts",
+    "test-gen":     "bun run test-gen.ts",
+    "typecheck":    "tsc --noEmit"
+  },
+
+  "dependencies": {
+    "js-yaml": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "@types/js-yaml": "^4.0.9",
+    "typescript": "^5"
+  }
+}
