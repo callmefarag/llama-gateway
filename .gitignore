@@ -62,7 +62,8 @@ coverage/
 # JetBrains
 .idea/
 # VS Code (add .vscode/extensions.json to allowlist if needed)
-.vscode/
+.vscode/*
+!.vscode/settings.json
 *.swp
 *.swo
 *~

@@ -1,0 +1,16 @@
+{
+  "conventionalCommits.promptScope": true,
+  "conventionalCommits.promptBody": true,
+  "conventionalCommits.promptFooter": true,
+  "conventionalCommits.autoCommit": false,
+  "conventionalCommits.scopes": [
+    "config",
+    "middleware",
+    "generator",
+    "cli",
+    "proxy",
+    "deps",
+    "docs",
+    "general"
+  ]
+}
