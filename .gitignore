@@ -62,12 +62,11 @@ coverage/
 # JetBrains
 .idea/
 # VS Code (add .vscode/extensions.json to allowlist if needed)
-.vscode/*
-!.vscode/settings.json
+.vscode/
 *.swp
 *.swo
 *~
-
+.vscode/settings.json
 # ── OS artifacts ─────────────────────────────────────────────────────────────
 
 # macOS
@@ -89,3 +88,6 @@ $RECYCLE.BIN/
 .directory
 .Trash-*
 .nfs*
+
+# ── Personal MDs ─────────────────────────────────────────────────────────────
+RELEASES.md
